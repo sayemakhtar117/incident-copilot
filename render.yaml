@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: incident-copilot
+    runtime: docker
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: STORE_TYPE
+        value: mongo
+      - key: MONGO_PERSISTENCE_ENABLED
+        value: "true" # Enable MongoDB persistence for testing.
+      - key: MONGODB_URI
+        sync: false        # paste your Atlas M0 connection string in the Render dashboard
+      - key: LLM_API_KEY
+        sync: false        # Groq (or any OpenAI-compatible) key
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: EMBEDDING_API_KEY
+        sync: false        # Gemini API key
+      - key: EMBEDDING_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta/openai
+      - key: EMBEDDING_MODEL
+        value: gemini-embedding-001
+      - key: EMBEDDING_DIMENSIONS
+        value: "768"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false        # exact origin of the separately deployed React UI

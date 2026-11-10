@@ -1,0 +1,10 @@
+# Activate with SPRING_PROFILES_ACTIVE=aws-ssm (build with -Paws).
+# Loads all SSM Parameter Store parameters under a path. The part after the prefix becomes the property name,
+# with "/" turned into ".", so create these (type SecureString):
+#   /incident-copilot/prod/copilot/llm/api-key
+#   /incident-copilot/prod/copilot/embedding/api-key
+#   /incident-copilot/prod/spring/data/mongodb/uri
+# Standard-tier parameters are free in AWS.
+spring:
+  config:
+    import: "aws-parameterstore:${AWS_PARAMETER_PATH:/incident-copilot/prod/}"
