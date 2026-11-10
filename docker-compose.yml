@@ -1,0 +1,24 @@
+# docker compose up --build                      -> app only (offline mode, or live if keys are in .env)
+# docker compose --profile mongo up --build      -> app + local MongoDB Atlas (vector search works locally)
+services:
+  app:
+    build: .
+    ports:
+      - "8081:8081"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      STORE_TYPE: ${STORE_TYPE:-memory}
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/incident_copilot?directConnection=true}
+
+  mongo:
+    profiles: ["mongo"]
+    image: mongodb/mongodb-atlas-local:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
