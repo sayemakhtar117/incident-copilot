@@ -1,0 +1,122 @@
+[
+  {
+    "id": "INC-001",
+    "title": "Payment service DB connection pool exhausted",
+    "service": "payment-service",
+    "severity": "SEV1",
+    "symptoms": "HikariPool-1 Connection is not available, request timed out after 30000ms. Checkout requests return HTTP 500. Active database connections pinned at the maximum with many threads waiting for a connection.",
+    "rootCause": "A release added a repository method that did not close its connection on the exception path, leaking connections until the pool was exhausted.",
+    "resolution": "Rolled back to the previous release. Fixed the leak with try-with-resources. Enabled Hikari leakDetectionThreshold. Added an alert on pending connection requests.",
+    "occurredOn": "2026-01-14"
+  },
+  {
+    "id": "INC-002",
+    "title": "Order service OutOfMemoryError from unbounded cache",
+    "service": "order-service",
+    "severity": "SEV2",
+    "symptoms": "java.lang.OutOfMemoryError: Java heap space. Pods restart repeatedly with OOMKilled. Heap usage climbs steadily after each restart and GC time increases.",
+    "rootCause": "A product lookup cache had no size limit or expiry, so it grew with every distinct key until the heap filled.",
+    "resolution": "Restarted pods to restore service. Replaced the map with a bounded Caffeine cache with expiry. Added a heap usage alert and a heap dump on OOM.",
+    "occurredOn": "2026-02-03"
+  },
+  {
+    "id": "INC-003",
+    "title": "Auth service 401 spike after signing key rotation",
+    "service": "auth-service",
+    "severity": "SEV1",
+    "symptoms": "Sudden spike of HTTP 401 responses. JWT signature verification fails for valid users. Started right after the identity provider rotated its signing keys.",
+    "rootCause": "Services cached the JWKS public keys for 24 hours and did not refresh when an unknown key id appeared.",
+    "resolution": "Forced a JWKS cache refresh on all instances. Changed the cache to refresh on unknown kid with a short TTL. Added a rotation runbook step to pre-publish new keys.",
+    "occurredOn": "2026-02-21"
+  },
+  {
+    "id": "INC-004",
+    "title": "Inventory Kafka consumer lag and rebalance loop",
+    "service": "inventory-service",
+    "severity": "SEV2",
+    "symptoms": "Kafka consumer group lag keeps growing. Partitions rebalance continuously. CommitFailedException: poll interval exceeded max.poll.interval.ms.",
+    "rootCause": "A slow downstream call inside the consumer made batch processing exceed max.poll.interval.ms, so the broker kicked the consumer out and triggered repeated rebalances.",
+    "resolution": "Reduced max.poll.records. Moved the slow call to an async worker pool with a timeout. Increased max.poll.interval.ms. Added consumer lag alerting.",
+    "occurredOn": "2026-03-09"
+  },
+  {
+    "id": "INC-005",
+    "title": "API gateway 504 timeouts from slow query without index",
+    "service": "api-gateway",
+    "severity": "SEV2",
+    "symptoms": "Clients receive 504 gateway timeout. The upstream orders endpoint is very slow. Database CPU is high and the slow query log shows a full collection scan.",
+    "rootCause": "A new filter on the orders listing query had no supporting index, causing a full scan that saturated the database under load.",
+    "resolution": "Created a compound index on the filter fields. Added a query timeout and pagination limit. Added a slow query alert.",
+    "occurredOn": "2026-03-30"
+  },
+  {
+    "id": "INC-006",
+    "title": "Notification service retry storm on email provider rate limit",
+    "service": "notification-service",
+    "severity": "SEV3",
+    "symptoms": "Email provider returns HTTP 429 too many requests. The retry queue keeps growing and the same messages are retried immediately, making the rate limiting worse.",
+    "rootCause": "Retries had no backoff or jitter and no circuit breaker, so each failure was retried at full speed and amplified the load on the provider.",
+    "resolution": "Added exponential backoff with jitter. Added a circuit breaker around the provider client. Capped the retry queue and respected the Retry-After header.",
+    "occurredOn": "2026-04-12"
+  },
+  {
+    "id": "INC-007",
+    "title": "User service cache outage causes database stampede",
+    "service": "user-service",
+    "severity": "SEV2",
+    "symptoms": "Redis connection refused. Cache hit ratio dropped to zero and database load tripled. Profile endpoints become slow.",
+    "rootCause": "The Redis node ran out of memory and restarted. Every request then fell through to the database at once because there was no request coalescing or fallback.",
+    "resolution": "Restored Redis with a larger memory limit and eviction policy. Added request coalescing and short-lived local caching. Added a Redis memory alert.",
+    "occurredOn": "2026-04-28"
+  },
+  {
+    "id": "INC-008",
+    "title": "Search service CPU saturation from regex backtracking",
+    "service": "search-service",
+    "severity": "SEV2",
+    "symptoms": "CPU at 100 percent on all instances. Request threads are saturated and hung. Requests containing long query strings never return.",
+    "rootCause": "A query sanitising regex with nested quantifiers caused catastrophic backtracking on long inputs.",
+    "resolution": "Replaced the regex with a linear-time parser. Added a maximum query length and a request timeout. Added a thread pool saturation alert.",
+    "occurredOn": "2026-05-16"
+  },
+  {
+    "id": "INC-009",
+    "title": "Payment partner TLS certificate expired",
+    "service": "payment-service",
+    "severity": "SEV1",
+    "symptoms": "javax.net.ssl.SSLHandshakeException: PKIX path building failed when calling the bank partner API. Started exactly at midnight. All partner payments fail.",
+    "rootCause": "The partner rotated to a new intermediate certificate and our truststore did not contain it, so the chain could not be validated.",
+    "resolution": "Imported the new intermediate certificate into the truststore and redeployed. Added a certificate expiry monitor and a truststore update runbook.",
+    "occurredOn": "2026-06-01"
+  },
+  {
+    "id": "INC-010",
+    "title": "Order service writes fail during MongoDB primary stepdown",
+    "service": "order-service",
+    "severity": "SEV3",
+    "symptoms": "MongoNotPrimaryException: not primary. Writes fail for about a minute during the maintenance window, then recover on their own.",
+    "rootCause": "A planned primary stepdown during maintenance caused a short election. The application did not use retryable writes, so in-flight writes failed.",
+    "resolution": "Enabled retryWrites and a suitable serverSelectionTimeout in the connection string. Added retry with backoff for idempotent writes. Communicated maintenance windows.",
+    "occurredOn": "2026-06-20"
+  },
+  {
+    "id": "INC-011",
+    "title": "Inventory node disk full from unrotated logs",
+    "service": "inventory-service",
+    "severity": "SEV2",
+    "symptoms": "No space left on device. Writes fail and the service cannot start. Node disk usage at 100 percent and log files are very large.",
+    "rootCause": "Debug logging was left enabled and log rotation was not configured, so log files filled the disk.",
+    "resolution": "Deleted old logs and restarted. Configured log rotation with size and age limits. Reverted the log level to INFO. Added a disk usage alert at 80 percent.",
+    "occurredOn": "2026-07-08"
+  },
+  {
+    "id": "INC-012",
+    "title": "Report service crash loop from missing environment variable",
+    "service": "report-service",
+    "severity": "SEV2",
+    "symptoms": "Pods in CrashLoopBackOff right after a deploy. Startup fails with a missing required environment variable DATABASE_URL.",
+    "rootCause": "The new release required a new configuration variable that was never added to the production deployment manifest.",
+    "resolution": "Added the variable to the production config and redeployed. Added a startup config validation with a clear error. Added a deploy checklist step for new variables.",
+    "occurredOn": "2026-07-25"
+  }
+]
