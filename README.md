@@ -72,6 +72,11 @@ curl -s localhost:8081/api/eval          # retrieval quality
 curl -s localhost:8081/actuator/prometheus | grep copilot
 ```
 
+Swagger UI is available at `http://localhost:8081/swagger-ui/index.html`; the OpenAPI specification is at
+`http://localhost:8081/v3/api-docs`. After deployment, use the backend service URL (for example,
+`https://<your-service>.onrender.com/swagger-ui/index.html`). The frontend domain `incidentpilot.in` serves
+the static UI and does not proxy Swagger requests to the backend.
+
 ## React UI
 
 The React UI is maintained separately in the `incident-copilot-frontend` project. Run this backend, then start the UI from that project's `frontend` directory with `npm ci` and `npm run dev`. The Vite development server proxies API requests to `http://localhost:8081`.
@@ -173,10 +178,13 @@ profile. AWS Secrets Manager is deliberately not used because it is billed per s
 | `LLM_BASE_URL` / `LLM_MODEL` | Groq / `llama-3.3-70b-versatile` | Any OpenAI-compatible chat API with tool calling |
 | `EMBEDDING_API_KEY` | empty | Empty means the local hashing embedder |
 | `EMBEDDING_BASE_URL` / `EMBEDDING_MODEL` / `EMBEDDING_DIMENSIONS` | Gemini / `gemini-embedding-001` / `768` | Any OpenAI-compatible embeddings API |
-| `STORE_TYPE` | `memory` | `memory` or `mongo` |
+| `STORE_TYPE` | `memory` | `memory` or `mongo`; Mongo is used only when persistence is enabled |
+| `MONGO_PERSISTENCE_ENABLED` | `true` | Set to `false` to keep incident data in temporary in-memory storage |
 | `MONGODB_URI` | localhost | Atlas connection string |
 | `PORT` | `8081` | Set by Render automatically |
 | `CORS_ALLOWED_ORIGINS` | empty | Comma-separated exact UI origins allowed to call the API |
+
+`MONGO_PERSISTENCE_ENABLED` is currently `true` for testing. Set it to `false` in the Render environment to keep incident data in temporary backend memory and avoid MongoDB storage usage; in-memory incidents are lost when the service restarts. Analysis responses are cached in memory and are not stored in MongoDB.
 
 ## Make it real (and stronger on a resume)
 
