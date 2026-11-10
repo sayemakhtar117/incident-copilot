@@ -1,0 +1,44 @@
+{
+  "deployments": [
+    { "service": "payment-service", "version": "v2.14.0", "minutesAgo": 18, "change": "Refactored transaction repository and added refund batching", "author": "dev-a" },
+    { "service": "payment-service", "version": "v2.13.2", "minutesAgo": 2880, "change": "Dependency bumps", "author": "dev-b" },
+    { "service": "order-service", "version": "v5.2.1", "minutesAgo": 240, "change": "Added in-memory product lookup cache", "author": "dev-c" },
+    { "service": "auth-service", "version": "v3.8.0", "minutesAgo": 4300, "change": "Logging improvements", "author": "dev-d" },
+    { "service": "inventory-service", "version": "v1.9.4", "minutesAgo": 95, "change": "Added stock reservation enrichment call to pricing API", "author": "dev-e" },
+    { "service": "api-gateway", "version": "v7.1.0", "minutesAgo": 35, "change": "New status filter on orders listing", "author": "dev-f" },
+    { "service": "notification-service", "version": "v2.2.3", "minutesAgo": 6000, "change": "Template updates", "author": "dev-g" }
+  ],
+  "metrics": [
+    { "service": "payment-service", "name": "hikari_connections_active", "value": 20, "unit": "/20", "status": "critical" },
+    { "service": "payment-service", "name": "hikari_connections_pending", "value": 47, "unit": "", "status": "critical" },
+    { "service": "payment-service", "name": "http_5xx_rate", "value": 38.5, "unit": "%", "status": "critical" },
+    { "service": "payment-service", "name": "p99_latency", "value": 30210, "unit": "ms", "status": "critical" },
+    { "service": "order-service", "name": "jvm_heap_used", "value": 96, "unit": "%", "status": "critical" },
+    { "service": "order-service", "name": "gc_pause_time", "value": 2100, "unit": "ms", "status": "warn" },
+    { "service": "order-service", "name": "pod_restarts_1h", "value": 7, "unit": "", "status": "critical" },
+    { "service": "auth-service", "name": "http_401_rate", "value": 62.0, "unit": "%", "status": "critical" },
+    { "service": "auth-service", "name": "cpu", "value": 22, "unit": "%", "status": "ok" },
+    { "service": "inventory-service", "name": "kafka_consumer_lag", "value": 184000, "unit": "msgs", "status": "critical" },
+    { "service": "inventory-service", "name": "consumer_rebalances_10m", "value": 14, "unit": "", "status": "critical" },
+    { "service": "inventory-service", "name": "disk_usage", "value": 41, "unit": "%", "status": "ok" },
+    { "service": "api-gateway", "name": "http_504_rate", "value": 21.4, "unit": "%", "status": "critical" },
+    { "service": "api-gateway", "name": "upstream_orders_p99", "value": 29500, "unit": "ms", "status": "critical" },
+    { "service": "notification-service", "name": "provider_429_rate", "value": 55.0, "unit": "%", "status": "critical" },
+    { "service": "notification-service", "name": "retry_queue_depth", "value": 90210, "unit": "msgs", "status": "critical" }
+  ],
+  "logs": [
+    { "service": "payment-service", "level": "ERROR", "minutesAgo": 3, "message": "HikariPool-1 - Connection is not available, request timed out after 30000ms." },
+    { "service": "payment-service", "level": "ERROR", "minutesAgo": 4, "message": "Failed to process checkout txn=88213 user=jane.doe@example.com: SQLTransientConnectionException" },
+    { "service": "payment-service", "level": "WARN", "minutesAgo": 9, "message": "Hikari leak suspected: connection held for 412s by TransactionRepository.findPending" },
+    { "service": "order-service", "level": "ERROR", "minutesAgo": 6, "message": "java.lang.OutOfMemoryError: Java heap space at ProductCache.put" },
+    { "service": "order-service", "level": "WARN", "minutesAgo": 12, "message": "ProductCache size=4,812,330 entries" },
+    { "service": "auth-service", "level": "ERROR", "minutesAgo": 5, "message": "JWT signature verification failed: no key found for kid=2026-11-key-2" },
+    { "service": "auth-service", "level": "WARN", "minutesAgo": 20, "message": "JWKS cache last refreshed 23h 40m ago" },
+    { "service": "inventory-service", "level": "ERROR", "minutesAgo": 2, "message": "CommitFailedException: poll interval exceeded max.poll.interval.ms=300000" },
+    { "service": "inventory-service", "level": "WARN", "minutesAgo": 8, "message": "PricingClient.enrich took 41s for batch of 500 records" },
+    { "service": "api-gateway", "level": "ERROR", "minutesAgo": 4, "message": "504 upstream timeout calling orders-service GET /orders?status=OPEN after 30000ms" },
+    { "service": "api-gateway", "level": "WARN", "minutesAgo": 10, "message": "orders-service slow query COLLSCAN on orders filter {status, customerId}" },
+    { "service": "notification-service", "level": "ERROR", "minutesAgo": 1, "message": "Email provider responded 429 Too Many Requests, Retry-After=120; retrying immediately" },
+    { "service": "notification-service", "level": "WARN", "minutesAgo": 5, "message": "Retry queue depth 90210, no backoff configured" }
+  ]
+}
