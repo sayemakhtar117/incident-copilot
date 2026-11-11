@@ -1,0 +1,34 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: incident-copilot
+  annotations:
+    run.googleapis.com/maxScale: "1"
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "1"
+    spec:
+      containerConcurrency: 8
+      timeoutSeconds: 300
+      containers:
+        - image: REGION-docker.pkg.dev/PROJECT_ID/incident-copilot/app:REPLACE_WITH_TAG
+          ports:
+            - containerPort: 8081
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          env:
+            - name: STORE_TYPE
+              value: mongo
+            - name: MONGO_PERSISTENCE_ENABLED
+              value: "true"
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: incident-copilot-mongodb-uri
+                  key: "1"
+            - name: CORS_ALLOWED_ORIGINS
+              value: https://incidentpilot.in
