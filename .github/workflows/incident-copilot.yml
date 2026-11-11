@@ -29,8 +29,15 @@ jobs:
           java-version: "21"
           cache: maven
 
-      - name: Test and package
-        run: mvn --batch-mode verify
+      - name: Test, package, and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: >
+          mvn --batch-mode verify
+          org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
+          -Dsonar.organization=sayemakhtar117
+          -Dsonar.projectKey=incident-copilot
+          -Dsonar.host.url=https://sonarcloud.io
 
       - name: Build Docker image
         run: docker build --tag incident-copilot:${{ github.sha }} .
