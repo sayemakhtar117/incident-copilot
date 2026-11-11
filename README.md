@@ -87,6 +87,15 @@ When hosting the UI separately, set `VITE_API_BASE_URL` in the UI project to thi
 
 Free tiers change, so check each provider's current limits before relying on them.
 
+### Google Cloud Run (configuration only)
+
+[`cloudrun.yaml`](cloudrun.yaml) is a conservative Cloud Run template, and
+[docs/GCP_FREE_TIER.md](docs/GCP_FREE_TIER.md) explains its limits. It defaults to offline mode,
+zero minimum instances, and one maximum instance. This repo has not been deployed to GCP; Cloud
+Run's free tier is not a guaranteed spending cap, and a deployment may incur charges.
+
+### Existing Render free-tier path
+
 You need three free accounts: **MongoDB Atlas** (database + vector search), **Groq** (LLM) and **Google AI Studio** (embeddings), plus **GitHub** and **Render** for hosting. All of them have free plans.
 
 ### 1. MongoDB Atlas (free M0 cluster)
