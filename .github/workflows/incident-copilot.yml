@@ -31,3 +31,6 @@ jobs:
 
       - name: Test and package
         run: mvn --batch-mode verify
+
+      - name: Build Docker image
+        run: docker build --tag incident-copilot:${{ github.sha }} .
