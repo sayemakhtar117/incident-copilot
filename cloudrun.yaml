@@ -13,7 +13,7 @@ spec:
       containerConcurrency: 8
       timeoutSeconds: 300
       containers:
-        - image: REGION-docker.pkg.dev/PROJECT_ID/incident-copilot/app:REPLACE_WITH_TAG
+        - image: docker.io/sayem117/incident-copilot@sha256:c4746abd783579f408cd328aacbf35c8e8f5a5b624c7a9980852f8795b15c74e
           ports:
             - containerPort: 8081
           resources:
@@ -22,13 +22,18 @@ spec:
               memory: 512Mi
           env:
             - name: STORE_TYPE
-              value: mongo
+              value: memory
             - name: MONGO_PERSISTENCE_ENABLED
-              value: "true"
-            - name: MONGODB_URI
-              valueFrom:
-                secretKeyRef:
-                  name: incident-copilot-mongodb-uri
-                  key: "1"
+              value: "false"
+            # To enable MongoDB persistence instead:
+            # - name: STORE_TYPE
+            #   value: mongo
+            # - name: MONGO_PERSISTENCE_ENABLED
+            #   value: "true"
+            # - name: MONGODB_URI
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: incident-copilot-mongodb-uri
+            #       key: "1"
             - name: CORS_ALLOWED_ORIGINS
               value: https://incidentpilot.in
