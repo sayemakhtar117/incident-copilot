@@ -13,7 +13,7 @@ spec:
       containerConcurrency: 8
       timeoutSeconds: 300
       containers:
-        - image: docker.io/sayem117/incident-copilot@sha256:c4746abd783579f408cd328aacbf35c8e8f5a5b624c7a9980852f8795b15c74e
+        - image: docker.io/sayem117/incident-copilot:latest
           ports:
             - containerPort: 8081
           resources:
