@@ -4,28 +4,35 @@ import com.sayem.incidentcopilot.model.Incident;
 import com.sayem.incidentcopilot.model.ScoredIncident;
 
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Brute-force cosine search. Fine for thousands of incidents; zero setup. Data
- * is lost on restart.
+ * Brute-force cosine search with a bounded in-memory history. Data is lost on
+ * restart.
  */
 public class InMemoryVectorStore implements VectorStore {
+
+	private static final int MAX_ENTRIES = 50;
 
 	private record Entry(Incident incident, float[] vector) {
 	}
 
-	private final Map<String, Entry> entries = new ConcurrentHashMap<>();
+	private final Map<String, Entry> entries = new LinkedHashMap<>();
 
 	/**
 	 * Stores the incident and its embedding in process memory, replacing any entry
 	 * with the same ID.
 	 */
 	@Override
-	public void upsert(Incident incident, float[] embedding) {
+	public synchronized void upsert(Incident incident, float[] embedding) {
+		entries.remove(incident.id());
 		entries.put(incident.id(), new Entry(incident, embedding));
+		if (entries.size() > MAX_ENTRIES) {
+			String oldestId = entries.keySet().iterator().next();
+			entries.remove(oldestId);
+		}
 	}
 
 	/**
@@ -33,7 +40,7 @@ public class InMemoryVectorStore implements VectorStore {
 	 * highest-scoring {@code k} incidents.
 	 */
 	@Override
-	public List<ScoredIncident> search(float[] queryVector, int k) {
+	public synchronized List<ScoredIncident> search(float[] queryVector, int k) {
 		return entries.values().stream()
 				.map(e -> new ScoredIncident(e.incident(), Vectors.cosine(queryVector, e.vector())))
 				.sorted(Comparator.comparingDouble(ScoredIncident::score).reversed()).limit(k).toList();
@@ -41,13 +48,13 @@ public class InMemoryVectorStore implements VectorStore {
 
 	/** Returns stored incidents ordered by ID for stable display. */
 	@Override
-	public List<Incident> all() {
+	public synchronized List<Incident> all() {
 		return entries.values().stream().map(Entry::incident).sorted(Comparator.comparing(Incident::id)).toList();
 	}
 
 	/** Returns the current number of in-memory entries. */
 	@Override
-	public long count() {
+	public synchronized long count() {
 		return entries.size();
 	}
 
