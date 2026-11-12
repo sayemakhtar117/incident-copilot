@@ -58,7 +58,7 @@ public class CopilotService {
 			.expireAfterWrite(Duration.ofMinutes(30)).build();
 
 	public CopilotService(Redactor redactor, EmbeddingService embeddings, VectorStore store,
-			@Qualifier("primaryLlm") LlmClient primary, RuleBasedLlmClient fallback, ToolRegistry tools,
+			@Qualifier("primaryLlm") LlmClient primary, @Qualifier("ruleBasedLlmClient") RuleBasedLlmClient fallback, ToolRegistry tools,
 			AnswerValidator validator, AppProperties props, MeterRegistry meters) {
 		this.redactor = redactor;
 		this.embeddings = embeddings;

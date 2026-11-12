@@ -41,3 +41,14 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag incident-copilot:${{ github.sha }} .
+
+      - name: Scan Docker image
+        run: >
+          docker run --rm
+          -v /var/run/docker.sock:/var/run/docker.sock
+          aquasec/trivy:0.58.1
+          image
+          --ignore-unfixed
+          --severity HIGH,CRITICAL
+          --exit-code 1
+          incident-copilot:${{ github.sha }}
