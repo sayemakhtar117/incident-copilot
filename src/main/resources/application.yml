@@ -47,6 +47,10 @@ copilot:
   cors:
     # Comma-separated exact browser origins allowed to call /api.
     allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  auth:
+    admin-email: ${AUTH_ADMIN_EMAIL:}
+    admin-password-hash: ${AUTH_ADMIN_PASSWORD_HASH:}
+    jwt-secret-base64: ${AUTH_JWT_SECRET_BASE64:}
   rag:
     top-k: 4
     min-score: 0.05
