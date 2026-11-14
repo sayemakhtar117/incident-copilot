@@ -79,68 +79,68 @@ jobs:
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:latest"
 
-  deploy:
-    name: Deploy to Cloud Run
-    needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    environment: production
-    permissions:
-      contents: read
-      id-token: write
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+  # deploy:
+  #   name: Deploy to Cloud Run
+  #   needs: docker
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 10
+  #   environment: production
+  #   permissions:
+  #     contents: read
+  #     id-token: write
+  #   steps:
+  #     - name: Check out repository
+  #       uses: actions/checkout@v4
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
-          project_id: incident-copilot-514405
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+  #       with:
+  #         workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  #         service_account: ${{ vars.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+  #         project_id: incident-copilot-514405
 
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+  #     - name: Set up Google Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
-      - name: Deploy service
-        env:
-          AUTH_ADMIN_EMAIL: ${{ secrets.AUTH_ADMIN_EMAIL }}
-          AUTH_ADMIN_PASSWORD_HASH: ${{ secrets.AUTH_ADMIN_PASSWORD_HASH }}
-          AUTH_JWT_SECRET_BASE64: ${{ secrets.AUTH_JWT_SECRET_BASE64 }}
-          EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
-          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
-        run: |
-          python3 - <<'PY'
-          import json
-          import os
-          from pathlib import Path
+  #     - name: Deploy service
+  #       env:
+  #         AUTH_ADMIN_EMAIL: ${{ secrets.AUTH_ADMIN_EMAIL }}
+  #         AUTH_ADMIN_PASSWORD_HASH: ${{ secrets.AUTH_ADMIN_PASSWORD_HASH }}
+  #         AUTH_JWT_SECRET_BASE64: ${{ secrets.AUTH_JWT_SECRET_BASE64 }}
+  #         EMBEDDING_API_KEY: ${{ secrets.EMBEDDING_API_KEY }}
+  #         LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+  #       run: |
+  #         python3 - <<'PY'
+  #         import json
+  #         import os
+  #         from pathlib import Path
 
-          template = Path("cloudrun.yaml").read_text(encoding="utf-8")
-          replacements = {
-              "AUTH_ADMIN_EMAIL": "__AUTH_ADMIN_EMAIL_JSON__",
-              "AUTH_ADMIN_PASSWORD_HASH": "__AUTH_ADMIN_PASSWORD_HASH_JSON__",
-              "AUTH_JWT_SECRET_BASE64": "__AUTH_JWT_SECRET_BASE64_JSON__",
-              "EMBEDDING_API_KEY": "__EMBEDDING_API_KEY_JSON__",
-              "LLM_API_KEY": "__LLM_API_KEY_JSON__",
-          }
-          required = {
-              "AUTH_ADMIN_EMAIL",
-              "AUTH_ADMIN_PASSWORD_HASH",
-              "AUTH_JWT_SECRET_BASE64",
-          }
-          rendered = template
-          for name, placeholder in replacements.items():
-              if rendered.count(placeholder) != 1:
-                  raise SystemExit(f"Expected exactly one {name} placeholder in cloudrun.yaml.")
-              value = os.environ.get(name, "")
-              if name in required and not value:
-                  raise SystemExit(f"Missing required GitHub production environment secret: {name}.")
-              if any(char in value for char in "\r\n"):
-                  raise SystemExit(f"{name} must be a single line.")
-              rendered = rendered.replace(placeholder, json.dumps(value))
-          output = Path(os.environ["RUNNER_TEMP"]) / "cloudrun.yaml"
-          output.write_text(rendered, encoding="utf-8")
-          PY
-          gcloud run services replace "$RUNNER_TEMP/cloudrun.yaml" --project=incident-copilot-514405 --region=us-central1 --platform=managed
-          gcloud run services add-iam-policy-binding incident-copilot --project=incident-copilot-514405 --region=us-central1 --member=allUsers --role=roles/run.invoker
+  #         template = Path("cloudrun.yaml").read_text(encoding="utf-8")
+  #         replacements = {
+  #             "AUTH_ADMIN_EMAIL": "__AUTH_ADMIN_EMAIL_JSON__",
+  #             "AUTH_ADMIN_PASSWORD_HASH": "__AUTH_ADMIN_PASSWORD_HASH_JSON__",
+  #             "AUTH_JWT_SECRET_BASE64": "__AUTH_JWT_SECRET_BASE64_JSON__",
+  #             "EMBEDDING_API_KEY": "__EMBEDDING_API_KEY_JSON__",
+  #             "LLM_API_KEY": "__LLM_API_KEY_JSON__",
+  #         }
+  #         required = {
+  #             "AUTH_ADMIN_EMAIL",
+  #             "AUTH_ADMIN_PASSWORD_HASH",
+  #             "AUTH_JWT_SECRET_BASE64",
+  #         }
+  #         rendered = template
+  #         for name, placeholder in replacements.items():
+  #             if rendered.count(placeholder) != 1:
+  #                 raise SystemExit(f"Expected exactly one {name} placeholder in cloudrun.yaml.")
+  #             value = os.environ.get(name, "")
+  #             if name in required and not value:
+  #                 raise SystemExit(f"Missing required GitHub production environment secret: {name}.")
+  #             if any(char in value for char in "\r\n"):
+  #                 raise SystemExit(f"{name} must be a single line.")
+  #             rendered = rendered.replace(placeholder, json.dumps(value))
+  #         output = Path(os.environ["RUNNER_TEMP"]) / "cloudrun.yaml"
+  #         output.write_text(rendered, encoding="utf-8")
+  #         PY
+  #         gcloud run services replace "$RUNNER_TEMP/cloudrun.yaml" --project=incident-copilot-514405 --region=us-central1 --platform=managed
+  #         gcloud run services add-iam-policy-binding incident-copilot --project=incident-copilot-514405 --region=us-central1 --member=allUsers --role=roles/run.invoker

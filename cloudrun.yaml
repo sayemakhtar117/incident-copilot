@@ -1,50 +1,50 @@
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: incident-copilot
-  annotations:
-    run.googleapis.com/maxScale: "1"
-spec:
-  template:
-    metadata:
-      annotations:
-        autoscaling.knative.dev/maxScale: "1"
-    spec:
-      containerConcurrency: 8
-      timeoutSeconds: 300
-      containers:
-        - image: docker.io/sayem117/incident-copilot:latest
-          ports:
-            - containerPort: 8081
-          resources:
-            limits:
-              cpu: "1"
-              memory: 512Mi
-          env:
-            - name: STORE_TYPE
-              value: memory
-            - name: MONGO_PERSISTENCE_ENABLED
-              value: "false"
-            # Rendered from GitHub production environment secrets during deployment.
-            - name: LLM_API_KEY
-              value: __LLM_API_KEY_JSON__
-            - name: EMBEDDING_API_KEY
-              value: __EMBEDDING_API_KEY_JSON__
-            - name: AUTH_ADMIN_EMAIL
-              value: __AUTH_ADMIN_EMAIL_JSON__
-            - name: AUTH_ADMIN_PASSWORD_HASH
-              value: __AUTH_ADMIN_PASSWORD_HASH_JSON__
-            - name: AUTH_JWT_SECRET_BASE64
-              value: __AUTH_JWT_SECRET_BASE64_JSON__
-            # To enable MongoDB persistence instead:
-            # - name: STORE_TYPE
-            #   value: mongo
-            # - name: MONGO_PERSISTENCE_ENABLED
-            #   value: "true"
-            # - name: MONGODB_URI
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: incident-copilot-mongodb-uri
-            #       key: "1"
-            - name: CORS_ALLOWED_ORIGINS
-              value: https://incidentpilot.in
+# apiVersion: serving.knative.dev/v1
+# kind: Service
+# metadata:
+#   name: incident-copilot
+#   annotations:
+#     run.googleapis.com/maxScale: "1"
+# spec:
+#   template:
+#     metadata:
+#       annotations:
+#         autoscaling.knative.dev/maxScale: "1"
+#     spec:
+#       containerConcurrency: 8
+#       timeoutSeconds: 300
+#       containers:
+#         - image: docker.io/sayem117/incident-copilot:latest
+#           ports:
+#             - containerPort: 8081
+#           resources:
+#             limits:
+#               cpu: "1"
+#               memory: 512Mi
+#           env:
+#             - name: STORE_TYPE
+#               value: memory
+#             - name: MONGO_PERSISTENCE_ENABLED
+#               value: "false"
+#             # Rendered from GitHub production environment secrets during deployment.
+#             - name: LLM_API_KEY
+#               value: __LLM_API_KEY_JSON__
+#             - name: EMBEDDING_API_KEY
+#               value: __EMBEDDING_API_KEY_JSON__
+#             - name: AUTH_ADMIN_EMAIL
+#               value: __AUTH_ADMIN_EMAIL_JSON__
+#             - name: AUTH_ADMIN_PASSWORD_HASH
+#               value: __AUTH_ADMIN_PASSWORD_HASH_JSON__
+#             - name: AUTH_JWT_SECRET_BASE64
+#               value: __AUTH_JWT_SECRET_BASE64_JSON__
+#             # To enable MongoDB persistence instead:
+#             # - name: STORE_TYPE
+#             #   value: mongo
+#             # - name: MONGO_PERSISTENCE_ENABLED
+#             #   value: "true"
+#             # - name: MONGODB_URI
+#             #   valueFrom:
+#             #     secretKeyRef:
+#             #       name: incident-copilot-mongodb-uri
+#             #       key: "1"
+#             - name: CORS_ALLOWED_ORIGINS
+#               value: https://incidentpilot.in
