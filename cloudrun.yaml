@@ -25,6 +25,17 @@ spec:
               value: memory
             - name: MONGO_PERSISTENCE_ENABLED
               value: "false"
+            # Rendered from GitHub production environment secrets during deployment.
+            - name: LLM_API_KEY
+              value: __LLM_API_KEY_JSON__
+            - name: EMBEDDING_API_KEY
+              value: __EMBEDDING_API_KEY_JSON__
+            - name: AUTH_ADMIN_EMAIL
+              value: __AUTH_ADMIN_EMAIL_JSON__
+            - name: AUTH_ADMIN_PASSWORD_HASH
+              value: __AUTH_ADMIN_PASSWORD_HASH_JSON__
+            - name: AUTH_JWT_SECRET_BASE64
+              value: __AUTH_JWT_SECRET_BASE64_JSON__
             # To enable MongoDB persistence instead:
             # - name: STORE_TYPE
             #   value: mongo

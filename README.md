@@ -7,7 +7,7 @@ A Spring Boot (Java 21) service that triages microservice incidents. Paste an al
 3. **Investigates** with an LLM agent that calls Java tools: `getRecentDeployments`, `fetchServiceMetrics`, `queryLogs`.
 4. **Validates** the answer (required fields, confidence clamped, cited incident ids must really exist) and returns a root-cause hypothesis, remediation steps, evidence and sources.
 
-It runs **fully offline with zero keys** (local embeddings, rule-based analyst, in-memory store), and switches to real components purely through environment variables.
+The AI components run without provider keys (local embeddings and rule-based analyst) and switch to external providers through environment variables. A single administrator login is required for API access.
 
 ```mermaid
 flowchart LR
@@ -42,35 +42,37 @@ flowchart LR
 Requirements: JDK 21 and Maven 3.9+ (or just Docker).
 
 ```bash
-# 1) offline, no keys
-mvn spring-boot:run
-# open http://localhost:8081
-
-# 2) or with Docker
+# Configure local runtime settings before starting the backend.
 docker compose up --build
 ```
 
-Run the tests: `mvn test`.
+To run with Maven instead, configure the required local runtime settings before `mvn spring-boot:run`. Run the tests with `mvn test`.
 
 ### API
 
 ```bash
-curl -s localhost:8081/api/status
+TOKEN=$(curl -s -X POST localhost:8081/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"<admin-email>","password":"<admin-password>"}' | jq -r .accessToken)
 
-curl -s -X POST localhost:8081/api/analyze -H 'Content-Type: application/json' -d '{
+curl -s localhost:8081/api/status -H "Authorization: Bearer $TOKEN"
+
+curl -s -X POST localhost:8081/api/analyze -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{
   "service": "payment-service",
   "alert": "Checkout 500s. HikariPool-1 Connection is not available, request timed out after 30000ms"
 }'
 
 # add a resolved incident to the knowledge base
-curl -s -X POST localhost:8081/api/incidents -H 'Content-Type: application/json' -d '{
+curl -s -X POST localhost:8081/api/incidents -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d '{
   "title": "Thumbnail worker stuck on corrupt PNG", "service": "media-service", "severity": "SEV3",
   "symptoms": "Thumbnail queue stalls, worker loops forever decoding a file",
   "rootCause": "Decoder had no timeout", "resolution": "Added decode timeout. Quarantined the file."}'
 
-curl -s localhost:8081/api/eval          # retrieval quality
+curl -s localhost:8081/api/eval -H "Authorization: Bearer $TOKEN" # retrieval quality
 curl -s localhost:8081/actuator/prometheus | grep copilot
 ```
+
+All `/api/**` endpoints except `POST /api/auth/login` require a 15-minute bearer token. See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md) for authentication details.
 
 Swagger UI is available at `http://localhost:8081/swagger-ui/index.html`; the OpenAPI specification is at
 `http://localhost:8081/v3/api-docs`. After deployment, use the backend service URL (for example,
